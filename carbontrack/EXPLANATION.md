@@ -340,3 +340,24 @@ Congratulations! You now have a complete, production-ready cloud-native applicat
 - Monitoring and automation
 
 This project is excellent for your B.Tech Semester IV portfolio and shows practical, real-world skills!
+
+AWS → Amazon Web Services
+EC2 → Elastic Compute Cloud
+S3 → Simple Storage Service
+VPC → Virtual Private Cloud
+IAM → Identity and Access Management
+RDS → Relational Database Service
+EBS → Elastic Block Store
+SNS → Simple Notification Service
+SQS → Simple Queue Service
+EFS → Elastic File System
+ECS → Elastic Container Service
+EKS → Elastic Kubernetes Service
+AMI → Amazon Machine Image
+AZ → Availability Zone
+ARN → Amazon Resource Name
+NAT → Network Address Translation
+CIDR → Classless Inter-Domain Routing
+WAF → Web Application Firewall
+KMS → Key Management Service
+ACM → AWS Certificate Manager
