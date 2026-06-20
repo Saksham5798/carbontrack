@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="CarbonTrack - Cloud-based CO₂ and Methane Emissions Monitoring & Compliance Platform for AWS. Track, manage, and report environmental emissions data in real time." />
+  <title>CarbonTrack – Emissions Monitoring Cloud</title>
+
+  <!-- Bootstrap 5 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- Custom -->
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     LOGIN PAGE
+═══════════════════════════════════════════ -->
+<div id="loginPage" class="login-page">
+  <div class="login-bg-orb orb1"></div>
+  <div class="login-bg-orb orb2"></div>
+  <div class="login-bg-orb orb3"></div>
+
+  <div class="login-grid">
+    <!-- Brand Panel -->
+    <div class="login-brand">
+      <div class="brand-logo">
+        <div class="logo-icon">🌿</div>
+        <div>
+          <div class="logo-text">Carbon<span>Track</span></div>
+          <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;">Emissions Cloud</div>
+        </div>
+      </div>
+
+      <div class="brand-tagline">Monitor. Manage.<br>Be Compliant.</div>
+      <p class="brand-desc">
+        CarbonTrack is a cloud-native emissions monitoring platform built on AWS. 
+        Track CO₂ and Methane emissions across facilities, manage workflows, and ensure 
+        regulatory compliance — all from a single unified dashboard.
+      </p>
+
+      <div class="brand-stats">
+        <div class="brand-stat">
+          <div class="stat-value">8+</div>
+          <div class="stat-label">Facilities</div>
+        </div>
+        <div class="brand-stat">
+          <div class="stat-value">AWS</div>
+          <div class="stat-label">Cloud Hosted</div>
+        </div>
+        <div class="brand-stat">
+          <div class="stat-value">99.9%</div>
+          <div class="stat-label">Uptime SLA</div>
+        </div>
+        <div class="brand-stat">
+          <div class="stat-value">ISO</div>
+          <div class="stat-label">14064 Ready</div>
+        </div>
+      </div>
+
+      <div style="margin-top:32px;font-size:11px;color:var(--text-muted);">
+        🔒 All data encrypted in transit and at rest &nbsp;|&nbsp; AWS ap-south-1 Region
+      </div>
+    </div>
+
+    <!-- Form Panel -->
+    <div class="login-form-panel">
+      <div class="login-title">Welcome back</div>
+      <div class="login-subtitle">Sign in to your CarbonTrack account</div>
+
+      <!-- Role Selector -->
+      <div class="role-tabs" id="roleTabs">
+        <button class="role-tab active" data-role="admin" onclick="setRole('admin',this)" id="tab-admin">
+          <i class="bi bi-shield-lock-fill"></i> Admin
+        </button>
+        <button class="role-tab" data-role="manager" onclick="setRole('manager',this)" id="tab-manager">
+          <i class="bi bi-person-badge-fill"></i> Manager
+        </button>
+        <button class="role-tab" data-role="staff" onclick="setRole('staff',this)" id="tab-staff">
+          <i class="bi bi-person-fill"></i> Staff
+        </button>
+      </div>
+
+      <div id="loginError" class="login-error">
+        <i class="bi bi-exclamation-triangle-fill"></i> <span id="loginErrorMsg">Invalid credentials.</span>
+      </div>
+
+      <form id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <div class="input-wrapper">
+            <i class="bi bi-envelope input-icon"></i>
+            <input type="email" class="form-control" id="loginEmail"
+              placeholder="you@carbontrack.com" autocomplete="email" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <div class="input-wrapper">
+            <i class="bi bi-lock input-icon"></i>
+            <input type="password" class="form-control" id="loginPassword"
+              placeholder="Enter your password" autocomplete="current-password" required />
+            <span class="input-toggle" onclick="togglePassword()">
+              <i class="bi bi-eye" id="pwEye"></i>
+            </span>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-login" id="loginBtn">
+          <span class="btn-text"><i class="bi bi-box-arrow-in-right me-2"></i>Sign In</span>
+          <span class="btn-loading"><span class="spinner me-2"></span>Authenticating…</span>
+        </button>
+      </form>
+
+      <!-- Demo Credentials -->
+      <div class="login-demo">
+        <p>🚀 Demo Credentials</p>
+        <div class="demo-cred">
+          <span class="demo-role">Admin</span>
+          <span class="demo-pass">Admin@123</span>
+          <button class="demo-fill" onclick="fillDemo('admin@carbontrack.com','Admin@123')">Use</button>
+        </div>
+        <div class="demo-cred">
+          <span class="demo-role">Manager</span>
+          <span class="demo-pass">Admin@123</span>
+          <button class="demo-fill" onclick="fillDemo('manager@carbontrack.com','Admin@123')">Use</button>
+        </div>
+        <div class="demo-cred">
+          <span class="demo-role">Staff</span>
+          <span class="demo-pass">Admin@123</span>
+          <button class="demo-fill" onclick="fillDemo('staff@carbontrack.com','Admin@123')">Use</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     MAIN APPLICATION (shown after login)
+═══════════════════════════════════════════ -->
+<div id="appLayout" class="app-layout" style="display:none;">
+
+  <!-- ── Sidebar ─────────────────────────────── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo-icon">🌿</div>
+      <div>
+        <div class="sidebar-logo-text">Carbon<span>Track</span></div>
+        <div class="sidebar-logo-sub">Emissions Cloud</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <a class="nav-item active" data-page="dashboard" onclick="showPage('dashboard',this)">
+        <span class="nav-icon"><i class="bi bi-grid-1x2-fill"></i></span>
+        <span>Dashboard</span>
+      </a>
+      <a class="nav-item" data-page="executive" onclick="showPage('executive',this)">
+        <span class="nav-icon"><i class="bi bi-bar-chart-fill"></i></span>
+        <span>Executive View</span>
+      </a>
+
+      <div class="nav-section-label">Emissions</div>
+      <a class="nav-item" data-page="emissions" onclick="showPage('emissions',this)">
+        <span class="nav-icon"><i class="bi bi-cloud-haze2-fill"></i></span>
+        <span>Emission Records</span>
+      </a>
+      <a class="nav-item" data-page="facilities" onclick="showPage('facilities',this)">
+        <span class="nav-icon"><i class="bi bi-building-fill"></i></span>
+        <span>Facilities</span>
+      </a>
+
+      <div class="nav-section-label">Workflow</div>
+      <a class="nav-item" data-page="workflow" onclick="showPage('workflow',this)">
+        <span class="nav-icon"><i class="bi bi-clipboard2-check-fill"></i></span>
+        <span>Tasks & Approval</span>
+        <span class="nav-badge" id="pendingBadge" style="display:none">0</span>
+      </a>
+      <a class="nav-item" data-page="reports" onclick="showPage('reports',this)">
+        <span class="nav-icon"><i class="bi bi-file-earmark-bar-graph-fill"></i></span>
+        <span>Reports</span>
+      </a>
+
+      <div class="nav-section-label">Operations</div>
+      <a class="nav-item" data-page="monitoring" onclick="showPage('monitoring',this)">
+        <span class="nav-icon"><i class="bi bi-activity"></i></span>
+        <span>Monitoring</span>
+      </a>
+      <a class="nav-item" data-page="users" onclick="showPage('users',this)" id="usersNavItem">
+        <span class="nav-icon"><i class="bi bi-people-fill"></i></span>
+        <span>User Management</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-user">
+      <div class="user-avatar" id="sidebarAvatar">A</div>
+      <div class="user-info">
+        <div class="user-name" id="sidebarName">Administrator</div>
+        <div class="user-role" id="sidebarRole">admin</div>
+      </div>
+      <button class="sidebar-logout" onclick="logout()" title="Sign Out">
+        <i class="bi bi-box-arrow-right"></i>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ── Main Content ───────────────────────── -->
+  <main class="main-content">
+    <!-- Top Header -->
+    <header class="top-header">
+      <div>
+        <div class="page-title" id="headerTitle">Dashboard</div>
+        <div class="page-subtitle" id="headerSubtitle">Welcome back — CarbonTrack Emissions Platform</div>
+      </div>
+      <div class="header-spacer"></div>
+      <div class="header-actions">
+        <button class="header-btn" title="Refresh Data" onclick="refreshCurrentPage()">
+          <i class="bi bi-arrow-clockwise"></i>
+        </button>
+        <button class="header-btn" title="Notifications" id="notifBtn">
+          <i class="bi bi-bell"></i>
+          <span class="notif-dot"></span>
+        </button>
+        <button class="header-btn" title="Cloud Status">
+          <i class="bi bi-cloud-check"></i>
+        </button>
+        <div class="user-avatar" id="headerAvatar" style="width:36px;height:36px;font-size:13px;cursor:pointer;">A</div>
+      </div>
+    </header>
+
+    <!-- Content Area -->
+    <div class="content-area">
+
+      <!-- ─── DASHBOARD PAGE ─────────────────── -->
+      <div class="page active" id="page-dashboard">
+        <!-- Stat Cards -->
+        <div class="stat-grid" id="statGrid">
+          <div class="stat-card green">
+            <div class="stat-icon green"><i class="bi bi-cloud-fill"></i></div>
+            <div class="stat-body">
+              <div class="stat-label">Total CO₂e Emissions</div>
+              <div class="stat-value" id="totalCo2e">—</div>
+              <div class="stat-change up"><i class="bi bi-arrow-up-short"></i> metric tons tracked</div>
+            </div>
+          </div>
+          <div class="stat-card blue">
+            <div class="stat-icon blue"><i class="bi bi-building-fill"></i></div>
+            <div class="stat-body">
+              <div class="stat-label">Active Facilities</div>
+              <div class="stat-value" id="activeFacilities">—</div>
+              <div class="stat-change up"><i class="bi bi-geo-alt"></i> across regions</div>
+            </div>
+          </div>
+          <div class="stat-card amber">
+            <div class="stat-icon amber"><i class="bi bi-clipboard2-check"></i></div>
+            <div class="stat-body">
+              <div class="stat-label">Compliance Rate</div>
+              <div class="stat-value" id="complianceRate">—</div>
+              <div class="stat-change" id="complianceChange">Records approved</div>
+            </div>
+          </div>
+          <div class="stat-card red">
+            <div class="stat-icon red"><i class="bi bi-hourglass-split"></i></div>
+            <div class="stat-body">
+              <div class="stat-label">Pending Approvals</div>
+              <div class="stat-value" id="pendingCount">—</div>
+              <div class="stat-change" style="color:var(--text-muted)">Awaiting review</div>
+            </div>
+          </div>
+          <div class="stat-card cyan">
+            <div class="stat-icon cyan"><i class="bi bi-fire"></i></div>
+            <div class="stat-body">
+              <div class="stat-label">Total CO₂ (Tons)</div>
+              <div class="stat-value" id="totalCo2">—</div>
+              <div class="stat-change" style="color:var(--text-muted)">Direct emissions</div>
+            </div>
+          </div>
+          <div class="stat-card purple">
+            <div class="stat-icon purple"><i class="bi bi-wind"></i></div>
+            <div class="stat-body">
+              <div class="stat-label">Total CH₄ (Tons)</div>
+              <div class="stat-value" id="totalMethane">—</div>
+              <div class="stat-change" style="color:var(--text-muted)">Methane emissions</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="row g-4 mb-4">
+          <div class="col-lg-8">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title"><i class="bi bi-graph-up me-2 text-primary"></i>Monthly Emissions Trend</div>
+                <span style="font-size:12px;color:var(--text-muted);">CO₂e (metric tons)</span>
+              </div>
+              <div class="card-body">
+                <div class="chart-container" style="height:280px;">
+                  <canvas id="monthlyChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-4">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title"><i class="bi bi-pie-chart-fill me-2 text-primary"></i>Status Distribution</div>
+              </div>
+              <div class="card-body">
+                <div class="chart-container" style="height:280px;">
+                  <canvas id="statusChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Region Stats + Recent Records -->
+        <div class="row g-4">
+          <div class="col-lg-5">
+            <div class="card" style="height:100%;">
+              <div class="card-header">
+                <div class="card-title"><i class="bi bi-map me-2 text-primary"></i>Region-wise Emissions</div>
+              </div>
+              <div class="card-body" id="regionStats">
+                <div class="text-center py-4"><span class="spinner"></span></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-7">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title"><i class="bi bi-clock-history me-2 text-primary"></i>Recent Emission Records</div>
+                <button class="btn btn-sm btn-secondary" onclick="showPage('emissions',document.querySelector('[data-page=emissions]'))">View All</button>
+              </div>
+              <div class="card-body p-0">
+                <div class="table-wrapper">
+                  <table class="data-table" id="recentEmissionsTable">
+                    <thead><tr>
+                      <th>Facility</th><th>Region</th>
+                      <th>CO₂e (t)</th><th>Date</th><th>Status</th>
+                    </tr></thead>
+                    <tbody id="recentEmissionsBody">
+                      <tr><td colspan="5" class="text-center py-4"><span class="spinner"></span></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div><!-- /dashboard -->
+
+      <!-- ─── EMISSIONS PAGE ─────────────────── -->
+      <div class="page" id="page-emissions">
+        <div class="filter-bar">
+          <div class="search-wrap">
+            <i class="bi bi-search search-icon"></i>
+            <input type="text" class="form-control" id="emissionSearch" placeholder="Search facility or region…" oninput="filterEmissions()">
+          </div>
+          <select class="form-control" id="emissionStatusFilter" onchange="filterEmissions()" style="max-width:160px;">
+            <option value="">All Statuses</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="under_review">Under Review</option>
+            <option value="rejected">Rejected</option>
+          </select>
+          <select class="form-control" id="emissionRegionFilter" onchange="filterEmissions()" style="max-width:160px;">
+            <option value="">All Regions</option>
+          </select>
+          <button class="btn btn-primary" onclick="openEmissionModal()" id="addEmissionBtn">
+            <i class="bi bi-plus-lg"></i> Add Record
+          </button>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><i class="bi bi-cloud-haze2-fill me-2 text-primary"></i>Emission Records</div>
+            <span class="text-muted" id="emissionCount" style="font-size:13px;">Loading…</span>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-wrapper">
+              <table class="data-table">
+                <thead><tr>
+                  <th>#</th>
+                  <th>Facility</th>
+                  <th>Region</th>
+                  <th>CO₂ (t)</th>
+                  <th>CH₄ (t)</th>
+                  <th>CO₂e (t)</th>
+                  <th>Date</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr></thead>
+                <tbody id="emissionsTableBody">
+                  <tr><td colspan="9" class="text-center py-4"><span class="spinner"></span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div><!-- /emissions -->
+
+      <!-- ─── FACILITIES PAGE ───────────────── -->
+      <div class="page" id="page-facilities">
+        <div class="filter-bar">
+          <div class="search-wrap">
+            <i class="bi bi-search search-icon"></i>
+            <input type="text" class="form-control" id="facilitySearch" placeholder="Search facilities…" oninput="filterFacilities()">
+          </div>
+          <button class="btn btn-primary" onclick="openFacilityModal()" id="addFacilityBtn">
+            <i class="bi bi-plus-lg"></i> Add Facility
+          </button>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><i class="bi bi-building-fill me-2 text-primary"></i>Registered Facilities</div>
+            <span class="text-muted" id="facilityCount" style="font-size:13px;">—</span>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-wrapper">
+              <table class="data-table">
+                <thead><tr>
+                  <th>#</th><th>Facility Name</th><th>Region</th><th>Type</th>
+                  <th>Records</th><th>Total CO₂e</th><th>Last Report</th><th>Status</th><th>Actions</th>
+                </tr></thead>
+                <tbody id="facilitiesTableBody">
+                  <tr><td colspan="9" class="text-center py-4"><span class="spinner"></span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div><!-- /facilities -->
+
+      <!-- ─── WORKFLOW PAGE ─────────────────── -->
+      <div class="page" id="page-workflow">
+        <div class="filter-bar">
+          <select class="form-control" id="taskStatusFilter" onchange="filterTasks()" style="max-width:160px;">
+            <option value="">All Statuses</option>
+            <option value="pending">Pending</option>
+            <option value="in_progress">In Progress</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="completed">Completed</option>
+          </select>
+          <select class="form-control" id="taskPriorityFilter" onchange="filterTasks()" style="max-width:140px;">
+            <option value="">All Priorities</option>
+            <option value="critical">Critical</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
+          <button class="btn btn-primary" onclick="openTaskModal()" id="addTaskBtn">
+            <i class="bi bi-plus-lg"></i> Assign Task
+          </button>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="stat-grid mb-4" id="workflowStats" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));">
+          <div class="stat-card amber">
+            <div class="stat-icon amber"><i class="bi bi-hourglass-split"></i></div>
+            <div class="stat-body"><div class="stat-label">Pending</div><div class="stat-value" id="wf-pending">—</div></div>
+          </div>
+          <div class="stat-card blue">
+            <div class="stat-icon blue"><i class="bi bi-activity"></i></div>
+            <div class="stat-body"><div class="stat-label">In Progress</div><div class="stat-value" id="wf-inprogress">—</div></div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-icon green"><i class="bi bi-check2-circle"></i></div>
+            <div class="stat-body"><div class="stat-label">Approved</div><div class="stat-value" id="wf-approved">—</div></div>
+          </div>
+          <div class="stat-card red">
+            <div class="stat-icon red"><i class="bi bi-x-circle"></i></div>
+            <div class="stat-body"><div class="stat-label">Rejected</div><div class="stat-value" id="wf-rejected">—</div></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><i class="bi bi-clipboard2-check-fill me-2 text-primary"></i>Tasks & Approvals</div>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-wrapper">
+              <table class="data-table">
+                <thead><tr>
+                  <th>#</th><th>Title</th><th>Assigned To</th>
+                  <th>Priority</th><th>Due Date</th><th>Status</th><th>Actions</th>
+                </tr></thead>
+                <tbody id="tasksTableBody">
+                  <tr><td colspan="7" class="text-center py-4"><span class="spinner"></span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div><!-- /workflow -->
+
+      <!-- ─── REPORTS PAGE ──────────────────── -->
+      <div class="page" id="page-reports">
+        <div class="row g-4 mb-4">
+          <div class="col-lg-4">
+            <div class="card">
+              <div class="card-header"><div class="card-title"><i class="bi bi-file-earmark-plus-fill me-2 text-primary"></i>Generate Report</div></div>
+              <div class="card-body">
+                <div class="form-group">
+                  <label class="form-label">Report Type</label>
+                  <select class="form-control" id="reportType">
+                    <option value="monthly">Monthly Emissions</option>
+                    <option value="quarterly">Quarterly Summary</option>
+                    <option value="annual">Annual Report</option>
+                    <option value="regional">Regional Analysis</option>
+                    <option value="compliance">Compliance Report</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">From Date</label>
+                  <input type="date" class="form-control" id="reportFromDate">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">To Date</label>
+                  <input type="date" class="form-control" id="reportToDate">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Region (Optional)</label>
+                  <select class="form-control" id="reportRegion">
+                    <option value="">All Regions</option>
+                    <option>Mumbai</option><option>Pune</option><option>Delhi</option>
+                    <option>Bangalore</option><option>Chennai</option>
+                    <option>Kolkata</option><option>Hyderabad</option><option>Ahmedabad</option>
+                  </select>
+                </div>
+                <button class="btn btn-primary w-100" onclick="generateReport()" id="generateReportBtn">
+                  <i class="bi bi-file-earmark-bar-graph"></i> Generate Report
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-8">
+            <div class="card" id="reportSummaryCard" style="display:none;">
+              <div class="card-header"><div class="card-title"><i class="bi bi-bar-chart-fill me-2 text-primary"></i>Report Summary</div></div>
+              <div class="card-body" id="reportSummaryBody"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><i class="bi bi-archive-fill me-2 text-primary"></i>Generated Reports</div>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-wrapper">
+              <table class="data-table">
+                <thead><tr>
+                  <th>#</th><th>Type</th><th>Period</th><th>Region</th>
+                  <th>Records</th><th>Generated By</th><th>Date</th><th>Actions</th>
+                </tr></thead>
+                <tbody id="reportsTableBody">
+                  <tr><td colspan="8" class="text-center py-4"><span class="spinner"></span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div><!-- /reports -->
+
+      <!-- ─── EXECUTIVE DASHBOARD PAGE ──────── -->
+      <div class="page" id="page-executive">
+        <div class="row g-4 mb-4">
+          <div class="col-12">
+            <div class="alert alert-info" style="margin-bottom:0;">
+              <i class="bi bi-info-circle-fill"></i>
+              <strong>Executive View</strong> — Real-time KPIs and environmental performance indicators.
+              Data refreshes automatically every 60 seconds.
+            </div>
+          </div>
+        </div>
+
+        <!-- Top KPIs -->
+        <div class="stat-grid mb-4" id="execStatGrid"></div>
+
+        <div class="row g-4 mb-4">
+          <div class="col-lg-6">
+            <div class="card">
+              <div class="card-header"><div class="card-title"><i class="bi bi-bar-chart-fill me-2 text-primary"></i>Emissions by Region</div></div>
+              <div class="card-body"><canvas id="execRegionChart" height="280"></canvas></div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div class="card">
+              <div class="card-header"><div class="card-title"><i class="bi bi-graph-up me-2 text-primary"></i>CO₂ vs CH₄ Comparison</div></div>
+              <div class="card-body"><canvas id="execCompareChart" height="280"></canvas></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-4">
+          <div class="col-lg-4">
+            <div class="card">
+              <div class="card-header"><div class="card-title"><i class="bi bi-speedometer2 me-2 text-primary"></i>Compliance Gauge</div></div>
+              <div class="card-body text-center" id="complianceGauge"></div>
+            </div>
+          </div>
+          <div class="col-lg-8">
+            <div class="card">
+              <div class="card-header"><div class="card-title"><i class="bi bi-award-fill me-2 text-primary"></i>Facility Performance Ranking</div></div>
+              <div class="card-body p-0">
+                <div class="table-wrapper"><table class="data-table">
+                  <thead><tr><th>Rank</th><th>Facility</th><th>Region</th><th>CO₂e (t)</th><th>Records</th><th>Compliance</th></tr></thead>
+                  <tbody id="execFacilityRank"></tbody>
+                </table></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div><!-- /executive -->
+
+      <!-- ─── MONITORING PAGE ───────────────── -->
+      <div class="page" id="page-monitoring">
+        <div class="row g-4 mb-4">
+          <div class="col-12">
+            <div class="alert alert-info" style="margin-bottom:0;">
+              <i class="bi bi-cloud-fill me-2"></i>
+              <strong>AWS CloudWatch Monitoring</strong> — Simulated real-time metrics.
+              In production, these connect to actual CloudWatch APIs.
+              <span class="ms-2" id="monitorRefresh" style="color:var(--primary);font-size:12px;"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metrics -->
+        <div class="monitor-grid mb-4" id="metricsGrid">
+          <div class="monitor-card">
+            <div class="monitor-label">CPU Utilization</div>
+            <div class="monitor-value" id="cpuValue">—</div>
+            <div class="progress-bar-wrap"><div class="progress-bar-fill green" id="cpuBar" style="width:0%"></div></div>
+            <div class="monitor-sub" id="cpuAlert"></div>
+          </div>
+          <div class="monitor-card">
+            <div class="monitor-label">Memory Usage</div>
+            <div class="monitor-value" id="memValue">—</div>
+            <div class="progress-bar-wrap"><div class="progress-bar-fill blue" id="memBar" style="width:0%"></div></div>
+            <div class="monitor-sub" id="memAlert"></div>
+          </div>
+          <div class="monitor-card">
+            <div class="monitor-label">Disk Usage</div>
+            <div class="monitor-value" id="diskValue">—</div>
+            <div class="progress-bar-wrap"><div class="progress-bar-fill amber" id="diskBar" style="width:0%"></div></div>
+            <div class="monitor-sub" id="diskAlert"></div>
+          </div>
+          <div class="monitor-card">
+            <div class="monitor-label">Network In/Out</div>
+            <div class="monitor-value green" id="netValue">—</div>
+            <div class="monitor-sub">MB/s throughput</div>
+          </div>
+          <div class="monitor-card">
+            <div class="monitor-label">Active Users</div>
+            <div class="monitor-value blue" id="activeUsersVal">—</div>
+            <div class="monitor-sub">Concurrent sessions</div>
+          </div>
+          <div class="monitor-card">
+            <div class="monitor-label">API Requests/min</div>
+            <div class="monitor-value green" id="reqValue">—</div>
+            <div class="monitor-sub">Average response time</div>
+          </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+          <div class="col-lg-8">
+            <div class="card">
+              <div class="card-header"><div class="card-title"><i class="bi bi-cpu-fill me-2 text-primary"></i>Real-time CPU & Memory</div></div>
+              <div class="card-body"><canvas id="rtChart" height="220"></canvas></div>
+            </div>
+          </div>
+          <div class="col-lg-4">
+            <div class="card">
+              <div class="card-header"><div class="card-title"><i class="bi bi-box-seam-fill me-2 text-primary"></i>Container Status</div></div>
+              <div class="card-body">
+                <div class="container-list" id="containerList"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-4">
+          <div class="col-12">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title"><i class="bi bi-journal-text me-2 text-primary"></i>Application Logs (Live)</div>
+                <button class="btn btn-sm btn-secondary" onclick="clearLogs()"><i class="bi bi-trash"></i> Clear</button>
+              </div>
+              <div class="card-body p-0">
+                <div id="logContainer" style="background:#0a0f1e;padding:16px;font-family:monospace;font-size:12px;height:220px;overflow-y:auto;border-radius:0 0 var(--radius-lg) var(--radius-lg);"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div><!-- /monitoring -->
+
+      <!-- ─── USER MANAGEMENT PAGE ──────────── -->
+      <div class="page" id="page-users">
+        <div class="filter-bar">
+          <div class="search-wrap">
+            <i class="bi bi-search search-icon"></i>
+            <input type="text" class="form-control" id="userSearch" placeholder="Search users…" oninput="filterUsers()">
+          </div>
+          <button class="btn btn-primary" onclick="openUserModal()">
+            <i class="bi bi-person-plus-fill"></i> Add User
+          </button>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title"><i class="bi bi-people-fill me-2 text-primary"></i>User Accounts</div></div>
+          <div class="card-body p-0">
+            <div class="table-wrapper">
+              <table class="data-table">
+                <thead><tr>
+                  <th>#</th><th>Name</th><th>Email</th><th>Role</th>
+                  <th>Department</th><th>Last Login</th><th>Status</th><th>Actions</th>
+                </tr></thead>
+                <tbody id="usersTableBody">
+                  <tr><td colspan="8" class="text-center py-4"><span class="spinner"></span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div><!-- /users -->
+
+    </div><!-- /content-area -->
+  </main>
+</div><!-- /app-layout -->
+
+<!-- ═══════════════════════════════════════════
+     MODALS
+═══════════════════════════════════════════ -->
+
+<!-- Add/Edit Emission Modal -->
+<div class="modal-overlay" id="emissionModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="emissionModalTitle">Add Emission Record</div>
+      <button class="modal-close" onclick="closeModal('emissionModal')"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body">
+      <form id="emissionForm">
+        <input type="hidden" id="emissionRecordId">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Facility *</label>
+            <select class="form-control" id="emissionFacilityId" required>
+              <option value="">Select Facility</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Date *</label>
+            <input type="date" class="form-control" id="emissionDate" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">CO₂ Emissions (metric tons) *</label>
+            <input type="number" class="form-control" id="emissionCo2" step="0.0001" min="0" placeholder="e.g. 1250.50" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">CH₄ Emissions (metric tons) *</label>
+            <input type="number" class="form-control" id="emissionMethane" step="0.0001" min="0" placeholder="e.g. 45.20" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Status</label>
+            <select class="form-control" id="emissionStatus">
+              <option value="pending">Pending</option>
+              <option value="under_review">Under Review</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">CO₂e (auto-calculated)</label>
+            <input type="text" class="form-control" id="emissionCo2ePreview" readonly placeholder="0.0000" style="color:var(--primary);">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notes</label>
+          <textarea class="form-control" id="emissionNotes" placeholder="Additional notes or observations…" rows="3"></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('emissionModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEmission()" id="saveEmissionBtn">
+        <i class="bi bi-save"></i> Save Record
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Facility Modal -->
+<div class="modal-overlay" id="facilityModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Add Facility</div>
+      <button class="modal-close" onclick="closeModal('facilityModal')"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body">
+      <form id="facilityForm">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Facility Name *</label>
+            <input type="text" class="form-control" id="facilityName" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Region *</label>
+            <select class="form-control" id="facilityRegion" required>
+              <option value="">Select Region</option>
+              <option>Mumbai</option><option>Pune</option><option>Delhi</option>
+              <option>Bangalore</option><option>Chennai</option>
+              <option>Kolkata</option><option>Hyderabad</option><option>Ahmedabad</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Facility Type *</label>
+            <select class="form-control" id="facilityType" required>
+              <option value="">Select Type</option>
+              <option value="manufacturing">Manufacturing</option>
+              <option value="power_plant">Power Plant</option>
+              <option value="refinery">Refinery</option>
+              <option value="warehouse">Warehouse</option>
+              <option value="office">Office</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Capacity (MW)</label>
+            <input type="number" class="form-control" id="facilityCapacity" step="0.01" min="0">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Location / Address</label>
+          <input type="text" class="form-control" id="facilityLocation" placeholder="City, State">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Operational Since</label>
+          <input type="date" class="form-control" id="facilityOpSince">
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('facilityModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveFacility()"><i class="bi bi-save"></i> Save Facility</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Task Modal -->
+<div class="modal-overlay" id="taskModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Assign New Task</div>
+      <button class="modal-close" onclick="closeModal('taskModal')"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body">
+      <form id="taskForm">
+        <div class="form-group">
+          <label class="form-label">Task Title *</label>
+          <input type="text" class="form-control" id="taskTitle" required>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Assign To *</label>
+            <select class="form-control" id="taskAssignTo" required>
+              <option value="">Select User</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Priority *</label>
+            <select class="form-control" id="taskPriority" required>
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
+              <option value="high">High</option>
+              <option value="critical">Critical</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Due Date</label>
+            <input type="date" class="form-control" id="taskDueDate">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Linked Record ID</label>
+            <input type="number" class="form-control" id="taskRecordId" placeholder="Optional">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea class="form-control" id="taskDesc" rows="3"></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('taskModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTask()"><i class="bi bi-save"></i> Create Task</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add User Modal -->
+<div class="modal-overlay" id="userModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Add New User</div>
+      <button class="modal-close" onclick="closeModal('userModal')"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body">
+      <form id="userForm">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Full Name *</label>
+            <input type="text" class="form-control" id="newUserName" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email *</label>
+            <input type="email" class="form-control" id="newUserEmail" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Role *</label>
+            <select class="form-control" id="newUserRole" required>
+              <option value="staff">Staff</option>
+              <option value="manager">Manager</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Department</label>
+            <input type="text" class="form-control" id="newUserDept">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password *</label>
+          <input type="password" class="form-control" id="newUserPassword" required minlength="6">
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('userModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveUser()"><i class="bi bi-save"></i> Create User</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Delete Modal -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <div class="modal-title text-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i>Confirm Delete</div>
+      <button class="modal-close" onclick="closeModal('confirmModal')"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body">
+      <p id="confirmMsg" style="color:var(--text-secondary);">Are you sure you want to delete this record?</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('confirmModal')">Cancel</button>
+      <button class="btn btn-danger" id="confirmDeleteBtn">
+        <i class="bi bi-trash"></i> Delete
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div id="toast-container"></div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- App JS -->
+<script src="js/app.js"></script>
+</body>
+</html>

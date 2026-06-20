@@ -1,0 +1,116 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CarbonTrack Emissions Monitoring Cloud - EC2 Deployment
+
+Parameters:
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access
+    Type: AWS::EC2::KeyPair::KeyName
+  InstanceType:
+    Description: EC2 instance type
+    Type: String
+    Default: t2.micro
+    AllowedValues: [t2.micro, t3.small, t3.medium]
+
+Mappings:
+  AWSRegionArch2AMI:
+    us-east-1:
+      Ubuntu2204: ami-0c55b159cbfafe1f0
+
+Resources:
+  # Security Group
+  CarbonTrackSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow SSH, HTTP, and HTTPS access
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0  # Restrict to your IP in production!
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+
+  # IAM Role for EC2 to access S3
+  CarbonTrackInstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      Path: /
+
+  # IAM Policy for S3 backups
+  CarbonTrackS3Policy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: CarbonTrackS3BackupPolicy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - s3:PutObject
+              - s3:ListBucket
+            Resource: '*'  # Restrict to specific bucket in production
+      Roles:
+        - !Ref CarbonTrackInstanceRole
+
+  # Instance Profile
+  CarbonTrackInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles:
+        - !Ref CarbonTrackInstanceRole
+
+  # EC2 Instance
+  CarbonTrackEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      SecurityGroups:
+        - !Ref CarbonTrackSecurityGroup
+      KeyName: !Ref KeyName
+      IamInstanceProfile: !Ref CarbonTrackInstanceProfile
+      ImageId: !FindInMap [AWSRegionArch2AMI, !Ref AWS::Region, Ubuntu2204]
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          apt update -y
+          apt upgrade -y
+          
+          # Install Docker
+          curl -fsSL https://get.docker.com -o get-docker.sh
+          sh get-docker.sh
+          usermod -aG docker ubuntu
+          
+          # Install Docker Compose
+          apt install docker-compose -y
+          
+          # Create app directory
+          mkdir -p /opt/carbontrack
+          chown -R ubuntu:ubuntu /opt/carbontrack
+          
+          # Reboot to apply group changes
+          reboot
+
+Outputs:
+  InstanceId:
+    Description: EC2 Instance ID
+    Value: !Ref CarbonTrackEC2Instance
+  PublicIP:
+    Description: EC2 Public IP
+    Value: !GetAtt CarbonTrackEC2Instance.PublicIp
+  PublicDNS:
+    Description: EC2 Public DNS
+    Value: !GetAtt CarbonTrackEC2Instance.PublicDnsName

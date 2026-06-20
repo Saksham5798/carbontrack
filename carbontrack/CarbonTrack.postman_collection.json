@@ -1,0 +1,107 @@
+{
+  "info": {
+    "name": "CarbonTrack API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"admin@carbontrack.com\",\"password\":\"Admin@123\"}"
+            },
+            "url": {"raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "auth", "login"]}
+          }
+        },
+        {
+          "name": "Get Users",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {"raw": "{{baseUrl}}/api/auth/users", "host": ["{{baseUrl}}"], "path": ["api", "auth", "users"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "Emissions",
+      "item": [
+        {
+          "name": "Get Emissions",
+          "request": {
+            "method": "GET",
+            "url": {"raw": "{{baseUrl}}/api/emissions", "host": ["{{baseUrl}}"], "path": ["api", "emissions"]}
+          }
+        },
+        {
+          "name": "Create Emission",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"facility_id\":1,\"emission_date\":\"2026-06-19\",\"co2_emissions\":1200,\"methane_emissions\":50,\"status\":\"pending\"}"
+            },
+            "url": {"raw": "{{baseUrl}}/api/emissions", "host": ["{{baseUrl}}"], "path": ["api", "emissions"]}
+          }
+        },
+        {
+          "name": "Get Stats",
+          "request": {
+            "method": "GET",
+            "url": {"raw": "{{baseUrl}}/api/emissions/stats/summary", "host": ["{{baseUrl}}"], "path": ["api", "emissions", "stats", "summary"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "Facilities",
+      "item": [
+        {
+          "name": "Get Facilities",
+          "request": {
+            "method": "GET",
+            "url": {"raw": "{{baseUrl}}/api/facilities", "host": ["{{baseUrl}}"], "path": ["api", "facilities"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "Workflow",
+      "item": [
+        {
+          "name": "Get Tasks",
+          "request": {
+            "method": "GET",
+            "url": {"raw": "{{baseUrl}}/api/workflow/tasks", "host": ["{{baseUrl}}"], "path": ["api", "workflow", "tasks"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reports",
+      "item": [
+        {
+          "name": "Get Reports",
+          "request": {
+            "method": "GET",
+            "url": {"raw": "{{baseUrl}}/api/reports", "host": ["{{baseUrl}}"], "path": ["api", "reports"]}
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {"key": "baseUrl", "value": "http://localhost"},
+    {"key": "token", "value": ""}
+  ]
+}
