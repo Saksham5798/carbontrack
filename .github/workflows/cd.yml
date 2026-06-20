@@ -110,15 +110,15 @@ jobs:
             # 3. Export Tag and pull updated images from GHCR
             export TAG=${{ github.sha }}
             echo "Pulling images for tag: $TAG..."
-            if ! docker-compose pull; then
+            if ! docker compose pull; then
               echo "⚠️ Failed to pull tag: $TAG, falling back to latest..."
               export TAG="latest"
-              docker-compose pull || echo "⚠️ Pull failed, running with local caches..."
+              docker compose pull || echo "⚠️ Pull failed, running with local caches..."
             fi
             
             # 4. Recreate containers with zero-downtime
             echo "Recreating containers..."
-            docker-compose up -d
+            docker compose up -d
             
             # 5. Verify health of the application
             HEALTH_URL="http://localhost:5001/api/health"
@@ -145,7 +145,7 @@ jobs:
             if [ "$SUCCESS" = false ]; then
               echo "❌ Health check failed! Rolling back to image tag: $PREV_TAG..."
               export TAG=$PREV_TAG
-              docker-compose up -d
+              docker compose up -d
               echo "✅ Rollback completed. Application restored to tag $PREV_TAG."
               exit 1
             fi
