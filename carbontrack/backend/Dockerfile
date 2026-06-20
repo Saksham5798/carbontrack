@@ -14,4 +14,4 @@ COPY . .
 EXPOSE 5000
 
 # Use Gunicorn as the production WSGI server
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "3", "app:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "1", "app:app"]

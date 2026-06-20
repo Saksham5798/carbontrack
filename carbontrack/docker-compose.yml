@@ -52,6 +52,7 @@ services:
     build:
       context: ./database
       dockerfile: Dockerfile
+    command: --performance-schema=OFF --key-buffer-size=16M --max-connections=50
     container_name: carbontrack-db
     ports:
       - "3306:3306"
