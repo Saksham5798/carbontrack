@@ -161,12 +161,10 @@ In your GitHub repository, go to `Settings -> Secrets and variables -> Actions` 
 *   `EC2_SSH_KEY`: The complete private key (`.pem` file) contents used to access the server.
 
 ### 2. How it Works
-*   **On Pull Request/Push to any branch**: Runs linting and python unit tests to verify code validity.
 *   **On Push to `main` branch**:
-    1. Runs backend unit tests.
-    2. Builds frontend and backend Docker containers and pushes them to **GitHub Container Registry (GHCR)**.
-    3. Connects to the EC2 server over SSH.
-    4. Automatically pulls the fresh images from GHCR, updates the container services with zero-downtime (`docker-compose up -d`), monitors `/api/health`, and automatically rolls back if health checks fail.
+    1. Builds frontend, backend, and database Docker containers and pushes them to **GitHub Container Registry (GHCR)**.
+    2. Connects to the EC2 server over SSH and uploads the `docker-compose.yml` file.
+    3. Automatically pulls the fresh images from GHCR on the EC2 host, updates the container services with zero-downtime (`docker-compose up -d`), monitors `/api/health`, and automatically rolls back if health checks fail.
 
 ---
 

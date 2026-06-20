@@ -127,8 +127,7 @@ Located in the `scripts/` folder:
 *Note: The Basic Tier utilizes AWS Free Tier limits which is ideal for this Semester IV case study project.*
 
 ## 15. CI/CD Pipeline (Implemented)
-We have implemented a fully production-ready CI/CD pipeline using **GitHub Actions** and **GitHub Container Registry (GHCR)**:
-*   **Continuous Integration**: Linting checks and backend unit testing run automatically on every pull request or push.
+We have implemented a fully production-ready CD pipeline using **GitHub Actions** and **GitHub Container Registry (GHCR)**:
 *   **Continuous Deployment**: Automated image building and pushing to GHCR, followed by remote SSH execution. The workflow logs in to GHCR on the EC2 instance, runs zero-downtime updates (`docker-compose up -d`), monitors API health, and automatically rolls back to the previous stable state if health checks fail.
 *   See `AWS-DEPLOYMENT-GUIDE.md` for secret parameters configuration.
 
