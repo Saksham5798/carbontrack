@@ -7,9 +7,9 @@ echo "========================================"
 echo "Starting System Maintenance..."
 echo "========================================"
 
-# 1. Clean up unused Docker images, containers, and networks
-echo "Cleaning up unused Docker resources..."
-docker system prune -af --volumes
+# 1. Clean up unused Docker images
+echo "Cleaning up unused Docker images..."
+docker image prune -af
 
 # 2. Clear old application logs (keep last 5 days)
 LOG_DIR="/opt/carbontrack/backend/logs"

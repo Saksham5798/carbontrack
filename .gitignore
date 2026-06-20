@@ -1,0 +1,38 @@
+# System files
+.DS_Store
+Thumbs.db
+*.tmp
+
+# Python files
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+venv/
+.venv/
+env/
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.production
+.env.staging
+
+# Secrets / SSH keys
+*.pem
+*.key
+*.pub
+
+# IDEs
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# Docker / Local logs
+*.log
+backend/logs/

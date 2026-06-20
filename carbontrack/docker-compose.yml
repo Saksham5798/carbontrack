@@ -5,6 +5,7 @@ services:
   # Frontend Service (Nginx)
   # --------------------------------------------------------
   frontend:
+    image: ghcr.io/saksham5798/carbontrack-frontend:${TAG:-latest}
     build:
       context: ./frontend
       dockerfile: Dockerfile
@@ -21,6 +22,7 @@ services:
   # Backend Service (Flask + Gunicorn)
   # --------------------------------------------------------
   backend:
+    image: ghcr.io/saksham5798/carbontrack-backend:${TAG:-latest}
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -46,7 +48,10 @@ services:
   # Database Service (MySQL 8)
   # --------------------------------------------------------
   database:
-    image: mysql:8.0
+    image: ghcr.io/saksham5798/carbontrack-db:${TAG:-latest}
+    build:
+      context: ./database
+      dockerfile: Dockerfile
     container_name: carbontrack-db
     ports:
       - "3306:3306"
@@ -57,7 +62,6 @@ services:
       - MYSQL_PASSWORD=YourStrongPassword@123
     volumes:
       - db_data:/var/lib/mysql
-      - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
     restart: always
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]

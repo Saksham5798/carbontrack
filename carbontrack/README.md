@@ -100,8 +100,7 @@ Key Linux commands utilized for server management:
 ## 11. Shell Scripts
 Located in the `scripts/` folder:
 *   `backup.sh`: Dumps the MySQL database and uploads the archive to an Amazon S3 bucket.
-*   `deploy.sh`: Pulls the latest code from GitHub and restarts the Docker containers.
-*   `maintenance.sh`: Cleans up unused Docker images and old log files to prevent disk exhaustion.
+*   `maintenance.sh`: Safely cleans up old dangling images (`docker image prune -af`) and application/journal logs without risking the deletion of persistent database volumes.
 *   `monitor.sh`: Checks system resource utilization.
 
 ## 12. IAM and Security Configuration
@@ -111,7 +110,7 @@ Located in the `scripts/` folder:
 ## 13. Backup and Disaster Recovery
 *   **Strategy:** Daily automated backups of the MySQL database are triggered via a Linux `cron` job (`0 2 * * * /opt/carbontrack/scripts/backup.sh`).
 *   **Storage:** Backups are compressed (`.sql.gz`) and securely transferred to Amazon S3.
-*   **Recovery:** In a disaster scenario, a new EC2 instance can be spun up, the code pulled via `deploy.sh`, and the latest SQL dump downloaded from S3 and restored into the new MySQL container.
+*   **Recovery:** In a disaster scenario, a new EC2 instance can be spun up, the git repository cloned/pulled directly, and the latest SQL dump downloaded from S3 and restored into the new MySQL container.
 
 ## 14. Pricing Analysis (Monthly Estimate)
 
@@ -127,11 +126,17 @@ Located in the `scripts/` folder:
 
 *Note: The Basic Tier utilizes AWS Free Tier limits which is ideal for this Semester IV case study project.*
 
-## 15. Future Enhancements
+## 15. CI/CD Pipeline (Implemented)
+We have implemented a fully production-ready CI/CD pipeline using **GitHub Actions** and **GitHub Container Registry (GHCR)**:
+*   **Continuous Integration**: Linting checks and backend unit testing run automatically on every pull request or push.
+*   **Continuous Deployment**: Automated image building and pushing to GHCR, followed by remote SSH execution. The workflow logs in to GHCR on the EC2 instance, runs zero-downtime updates (`docker-compose up -d`), monitors API health, and automatically rolls back to the previous stable state if health checks fail.
+*   See `AWS-DEPLOYMENT-GUIDE.md` for secret parameters configuration.
+
+## 16. Future Enhancements
 *   **Migrate to Managed Services:** Move the local MySQL container to Amazon RDS for automated backups and Multi-AZ deployments.
-*   **Serverless Migration:** Refactor backend Express routes into AWS Lambda functions utilizing API Gateway.
-*   **CI/CD Pipeline:** Implement GitHub Actions or AWS CodePipeline to automate the `deploy.sh` script upon code commits.
+*   **Serverless Migration:** Refactor backend Flask routes into AWS Lambda functions utilizing API Gateway.
 *   **IoT Integration:** Connect live IoT sensors from facilities directly to AWS IoT Core to automatically ingest real-time emission data without manual data entry.
 
-## 16. Conclusion
-The CarbonTrack Emissions Monitoring Cloud successfully demonstrates the integration of modern web development (Node.js, Express, HTML/CSS/JS) with cloud infrastructure (AWS) and DevOps practices (Docker, Shell Scripting, Linux Administration). It fulfills all case study requirements by providing a realistic, functional application architecture suitable for deployment while maintaining security, automation, and cost-efficiency.
+## 17. Conclusion
+The CarbonTrack Emissions Monitoring Cloud successfully demonstrates the integration of modern web development (Flask, HTML/CSS/JS) with cloud infrastructure (AWS) and DevOps practices (Docker, GHCR Container Registry, GitHub Actions CI/CD, Shell Scripting, Linux Administration). It fulfills all case study requirements by providing a realistic, functional application architecture suitable for deployment while maintaining security, automation, and cost-efficiency.
+

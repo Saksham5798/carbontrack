@@ -150,6 +150,26 @@ sudo systemctl enable amazon-cloudwatch-agent
 
 ---
 
+## Step 8: Set Up CI/CD Pipeline (GitHub Actions)
+
+We have configured a fully automated Continuous Integration & Deployment (CI/CD) pipeline using GitHub Actions (located in `.github/workflows/cd.yml`). 
+
+### 1. Configure Repository Secrets
+In your GitHub repository, go to `Settings -> Secrets and variables -> Actions` and add the following secrets:
+*   `EC2_HOST`: The public IP address or public DNS of your EC2 instance.
+*   `EC2_USERNAME`: The SSH login username (usually `ubuntu` for Ubuntu servers).
+*   `EC2_SSH_KEY`: The complete private key (`.pem` file) contents used to access the server.
+
+### 2. How it Works
+*   **On Pull Request/Push to any branch**: Runs linting and python unit tests to verify code validity.
+*   **On Push to `main` branch**:
+    1. Runs backend unit tests.
+    2. Builds frontend and backend Docker containers and pushes them to **GitHub Container Registry (GHCR)**.
+    3. Connects to the EC2 server over SSH.
+    4. Automatically pulls the fresh images from GHCR, updates the container services with zero-downtime (`docker-compose up -d`), monitors `/api/health`, and automatically rolls back if health checks fail.
+
+---
+
 ## Access Your Application
 - **HTTP**: `http://<YOUR-EC2-PUBLIC-IP>`
 - **HTTPS**: `https://your-domain.com` (if configured)

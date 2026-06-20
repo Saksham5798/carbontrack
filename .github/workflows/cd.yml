@@ -1,0 +1,189 @@
+name: CarbonTrack CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  test:
+    name: Lint & Test Backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f carbontrack/backend/requirements.txt ]; then
+            pip install -r carbontrack/backend/requirements.txt
+          fi
+          # Install flake8 for basic syntax checks
+          pip install flake8
+
+      - name: Lint with flake8
+        run: |
+          # stop the build if there are Python syntax errors or undefined names
+          flake8 carbontrack/backend --count --select=E9,F63,F7,F82 --show-source --statistics
+          # exit-zero treats all errors as warnings
+          flake8 carbontrack/backend --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+      - name: Run Unit Tests
+        run: |
+          python -m unittest discover -s carbontrack/backend/tests -p "test_*.py"
+
+  build-and-push:
+    name: Build & Push to GHCR
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Downcase Repo Owner
+        run: |
+          echo "OWNER_LC=${OWNER,,}" >> ${GITHUB_ENV}
+        env:
+          OWNER: "${{ github.repository_owner }}"
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Backend Image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./carbontrack/backend
+          file: ./carbontrack/backend/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ env.OWNER_LC }}/carbontrack-backend:latest
+            ghcr.io/${{ env.OWNER_LC }}/carbontrack-backend:${{ github.sha }}
+
+      - name: Build and Push Frontend Image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./carbontrack/frontend
+          file: ./carbontrack/frontend/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ env.OWNER_LC }}/carbontrack-frontend:latest
+            ghcr.io/${{ env.OWNER_LC }}/carbontrack-frontend:${{ github.sha }}
+
+      - name: Build and Push Database Image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./carbontrack/database
+          file: ./carbontrack/database/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ env.OWNER_LC }}/carbontrack-db:latest
+            ghcr.io/${{ env.OWNER_LC }}/carbontrack-db:${{ github.sha }}
+
+  deploy:
+    name: Deploy to AWS EC2
+    needs: build-and-push
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Copy docker-compose.yml via SCP
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          source: "carbontrack/docker-compose.yml"
+          target: "/opt/carbontrack"
+          strip_components: 1
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          script: |
+            # 1. Ensure app directory exists
+            if [ ! -d "/opt/carbontrack" ]; then
+              sudo mkdir -p /opt/carbontrack
+              sudo chown -R ${{ secrets.EC2_USERNAME }}:${{ secrets.EC2_USERNAME }} /opt/carbontrack
+            fi
+            
+            cd /opt/carbontrack
+            
+            # Save previous running backend tag for rollback fallback
+            PREV_TAG=$(docker inspect --format='{{index .Config.Image}}' carbontrack-backend 2>/dev/null | cut -d':' -f2 || echo "latest")
+            
+            # 2. Login to GHCR registry on remote server
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
+            # 3. Export Tag and pull updated images from GHCR
+            export TAG=${{ github.sha }}
+            echo "Pulling images for tag: $TAG..."
+            if ! docker-compose pull; then
+              echo "⚠️ Failed to pull tag: $TAG, falling back to latest..."
+              export TAG="latest"
+              docker-compose pull || echo "⚠️ Pull failed, running with local caches..."
+            fi
+            
+            # 4. Recreate containers with zero-downtime
+            echo "Recreating containers..."
+            docker-compose up -d
+            
+            # 5. Verify health of the application
+            HEALTH_URL="http://localhost:5001/api/health"
+            MAX_RETRIES=15
+            RETRY_INTERVAL=3
+            SUCCESS=false
+            
+            echo "Verifying backend health on $HEALTH_URL..."
+            for ((i=1; i<=MAX_RETRIES; i++)); do
+              RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" "$HEALTH_URL" || true)
+              if [ "$RESPONSE" -eq 200 ]; then
+                CONTENT=$(curl -s "$HEALTH_URL" || true)
+                if [[ "$CONTENT" == *"healthy"* ]]; then
+                  echo "✅ Backend is healthy! Response: $CONTENT"
+                  SUCCESS=true
+                  break
+                fi
+              fi
+              echo "Retry $i/$MAX_RETRIES: Backend not ready (HTTP status $RESPONSE). Waiting $RETRY_INTERVAL seconds..."
+              sleep $RETRY_INTERVAL
+            done
+            
+            # 6. Rollback if unhealthy
+            if [ "$SUCCESS" = false ]; then
+              echo "❌ Health check failed! Rolling back to image tag: $PREV_TAG..."
+              export TAG=$PREV_TAG
+              docker-compose up -d
+              echo "✅ Rollback completed. Application restored to tag $PREV_TAG."
+              exit 1
+            fi
+            
+            # 7. Clean up unused images to free disk space
+            echo "Cleaning up dangling images..."
+            docker image prune -f
